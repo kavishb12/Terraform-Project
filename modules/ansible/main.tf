@@ -10,16 +10,31 @@ resource "aws_instance" "ansible" {
   instance_type = "t2.micro"
 
   tags = {
-    Name = "HelloWorld"
+    Name = "ansible"
   }
 
   subnet_id =   var.subnet_id
   
-  security_groups = [var.sg_id]
+  vpc_security_group_ids = [var.sg_id]
+
+  key_name = "terraform-key"
   
   provisioner "remote-exec" {
     inline = [
-      "sudo amazon-linux-extras install ansible2"
+      "sudo amazon-linux-extras install ansible2 -y"
     ]
+
+    connection {
+    type     = "ssh"
+    user     = "ec2-user"
+    private_key = file("../../../terraform-key.pem")
+    host     = "${self.public_ip}"
   }
+
+  }
+}
+
+resource "aws_eip" "ansible" {
+  instance = aws_instance.ansible.id
+  vpc      = true
 }
